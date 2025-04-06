@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+ <meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0">
+ <title>Clock Dashboard</title>
+ <style>
+  .clock-display-container {
+   font-size: 3rem;
+   font-weight: bold;
+   text-align: center;
+   background: rgba(0, 0, 0, 0.4);
+   padding: 1rem 2rem;
+   border-radius: 20px;
+   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5), inset 0 0 10px rgba(255, 255, 255, 0.05);
+   color: #cceeff;
+   font-family: 'Courier New', Courier, monospace;
+   margin: 1rem auto;
+   width: fit-content;
+   min-width: 260px;
+  }
+
+  body.light-mode .clock-display-container {
+   background: rgba(255, 255, 255, 0.4);
+   color: #004466;
+   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1), inset 0 0 8px rgba(0, 0, 0, 0.05);
+  }
+
+  body {
+   margin: 0;
+   background: #000;
+   font-family: sans-serif;
+   color: white;
+   overflow: scroll;
+   transition: background 0.5s, color 0.5s;
+  }
+
+  body.light-mode {
+   background: #f4f4f4;
+   color: #000;
+  }
+
+  .clock-container {
+   display: flex;
+   flex-wrap: wrap;
+   justify-content: center;
+   gap: 1rem;
+   padding: 2rem;
+   position: relative;
+   z-index: 1;
+   text-align: center;
+  }
+
+  .column {
+   flex: 1 1 30%;
+   background: rgba(255, 255, 255, 0.1);
+   padding: 1rem;
+   border-radius: 10px;
+   min-width: 280px;
+   transition: background 0.5s;
+  }
+
+  body.light-mode .column {
+   background: rgba(0, 0, 0, 0.05);
+  }
+
+  #clock {
+   font-size: 2.5rem;
+   text-align: center;
+   margin: auto;
+  }
+
+  video.bg-video {
+   position: fixed;
+   top: 0;
+   left: 0;
+   width: 100%;
+   height: 100%;
+   object-fit: cover;
+   z-index: 0;
+   opacity: 1;
+   pointer-events: none;
+  }
+
+  .audio-controls,
+  .mood-controls {
+   margin: auto;
+   width: 50%;
+   display:flex;
+   flex-direction: column;
+  }
+
+  #theme-toggle {
+   margin-top: 1rem;
+   padding: 0.5rem 1rem;
+   font-size: 1rem;
+   cursor: pointer;
+   background: #00aaff;
+   color: white;
+   border: none;
+   border-radius: 6px;
+  }
+
+  select#mood-select {
+   padding: 0.4rem;
+   font-size: 1rem;
+   border-radius: 5px;
+   border: none;
+   background: #333;
+   color: white;
+  }
+
+  .mood-history {
+   margin-top: 1.5rem;
+   max-height: 200px;
+   overflow-y: auto;
+   background: rgba(255, 255, 255, 0.05);
+   border: 1px solid #ccc;
+   border-radius: 8px;
+   padding: 0.5rem;
+  }
+
+  .mood-history ul {
+   list-style: none;
+   padding: 0;
+   margin: 0;
+  }
+
+  .mood-history li {
+   font-size: 0.9rem;
+   padding: 0.25rem 0;
+   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  body[data-mood="happy"] .column {
+   background-color: rgba(255, 224, 100, 0.564);
+  }
+
+  body[data-mood="anxious"] .column {
+   background-color: rgba(255, 140, 140, 0.61);
+  }
+
+  body[data-mood="sad"] .column {
+   background-color: rgba(100, 148, 237, 0.512);
+  }
+
+  body[data-mood="irritated"] .column {
+   background-color: rgba(255, 105, 97, 0.518);
+  }
+
+  body[data-mood="excited"] .column {
+   background-color: rgba(144, 238, 144, 0.516);
+  }
+
+  body[data-mood="stressed"] .column {
+   background-color: rgba(255, 182, 193, 0.553);
+  }
+
+  body.light-mode[data-mood="happy"] .column {
+   background-color: rgba(255, 233, 120, 0.768);
+  }
+
+  body.light-mode[data-mood="anxious"] .column {
+   background-color: rgba(255, 160, 160, 0.768);
+  }
+
+  body.light-mode[data-mood="sad"] .column {
+   background-color: rgba(173, 216, 230, 0.728);
+  }
+
+  body.light-mode[data-mood="irritated"] .column {
+   background-color: rgba(255, 140, 120, 0.81);
+  }
+
+  body.light-mode[data-mood="excited"] .column {
+   background-color: rgba(152, 251, 152, 0.845);
+  }
+
+  body.light-mode[data-mood="stressed"] .column {
+   background-color: rgba(255, 192, 203, 0.833);
+  }
+
+  .numerology-title {
+   font-size: 1.2rem;
+   font-weight: bold;
+   margin-top: 1rem;
+  }
+
+  .numerology-reading {
+   background-color: rgba(255, 255, 255, 0.08);
+   padding: 1rem;
+   border-radius: 8px;
+   margin-bottom: 1.5rem;
+  }
+
+  body.light-mode .numerology-reading {
+   background-color: rgba(0, 0, 0, 0.05);
+  }
+ </style>
+</head>
+
+<body>
+ <video autoplay loop muted class="bg-video" id="rainVideo">
+  <source src="assets/video/lightest.mp4" type="video/mp4">
+ </video>
+
+ <div class="clock-container">
+  <div class="column">
+   <button id="theme-toggle">Toggle Theme</button>
+   <br>
+   <br>
+   <div id="clock">--:--:--</div>
+   <div class="mood-controls">
+    <br>
+    <br>
+    <label for="mood-select">Select Mood:</label>
+    <br>
+    <br>
+    <select id="mood-select">
+     <option value="happy">Happy</option>
+     <option value="anxious">Anxious</option>
+     <option value="sad">Sad</option>
+     <option value="irritated">Irritated</option>
+     <option value="excited">Excited</option>
+     <option value="stressed">Stressed</option>
+    </select>
+    <br>
+    <br>
+    <button onclick="submitMood()">Submit Mood</button>
+    <br>
+    <br>
+    <br>
+   </div>
+   <div class="audio-controls">
+    <button id="toggle-audio">▶️ Play</button>
+    <br>
+    <input type="range" id="volume-control" min="0" max="1" step="0.01" value="0.5">
+    <br>
+    <button id="mute-toggle">🔇 Mute</button>
+   </div>
+   
+   <div class="mood-history">
+    <h3>Mood History</h3>
+    <ul id="mood-log"></ul>
+   </div>
+  </div>
+  <div class="column">
+   <h2>Numerology Results</h2>
+   <div id="resultsContent"></div>
+  </div>
+  <div class="column">
+   <h2>Astrology</h2>
+   <p>Coming soon...</p>
+  </div>
+ </div>
+ <script>
+  // Clock
+  function updateClock() {
+   const now = new Date();
+   let hours = now.getHours(), mins = now.getMinutes().toString().padStart(2, '0'), secs = now.getSeconds().toString().padStart(2, '0');
+   document.getElementById("clock").textContent = `${hours.toString().padStart(2, '0')}:${mins}:${secs}`;
+  }
+  setInterval(updateClock, 1000); updateClock();
+
+  // Mood logic
+  const audioMap = {
+   happy: "assets/audio/happy.mp3",
+   anxious: "assets/audio/anxious.mp3",
+   sad: "assets/audio/sad.mp3",
+   irritated: "assets/audio/irritated.mp3",
+   excited: "assets/audio/excited.mp3",
+   stressed: "assets/audio/stressed.mp3"
+  };
+  const videoMap = {
+   happy: "assets/video/happy.mp4",
+   anxious: "assets/video/anxious.mp4",
+   sad: "assets/video/sad.mp4",
+   irritated: "assets/video/irritated.mp4",
+   excited: "assets/video/excited.mp4",
+   stressed: "assets/video/stressed.mp4"
+  };
+  let currentAudio = new Audio(audioMap["lightest"]);
+  currentAudio.loop = true;
+  currentAudio.volume = parseFloat(localStorage.getItem("volume") || 0.5);
+  currentAudio.muted = localStorage.getItem("muted") === "true";
+
+  function submitMood() {
+   const mood = document.getElementById("mood-select").value;
+   localStorage.setItem("currentMood", mood);
+   logMood(mood);
+   updateMediaByMood(mood);
+   renderMoodHistory();
+  }
+
+  function updateMediaByMood(mood) {
+   if (audioMap[mood]) {
+    currentAudio.pause();
+    currentAudio = new Audio(audioMap[mood]);
+    currentAudio.loop = true;
+    currentAudio.volume = parseFloat(localStorage.getItem("volume") || 0.5);
+    currentAudio.muted = localStorage.getItem("muted") === "true";
+    currentAudio.play();
+   }
+   const rainVideo = document.getElementById("rainVideo");
+   rainVideo.src = videoMap[mood];
+   rainVideo.load();
+   rainVideo.play();
+   document.body.setAttribute("data-mood", mood);
+  }
+
+  function logMood(mood) {
+   const history = JSON.parse(localStorage.getItem("moodHistory") || "[]");
+   history.push({ mood, timestamp: new Date().toISOString() });
+   localStorage.setItem("moodHistory", JSON.stringify(history));
+  }
+
+  // Audio controls
+  const toggleAudio = document.getElementById("toggle-audio");
+  const muteToggle = document.getElementById("mute-toggle");
+  const volumeSlider = document.getElementById("volume-control");
+
+  toggleAudio.onclick = () => {
+   if (currentAudio.paused) {
+    currentAudio.play();
+    toggleAudio.textContent = "⏸ Pause";
+   } else {
+    currentAudio.pause();
+    toggleAudio.textContent = "▶️ Play";
+   }
+  };
+
+  muteToggle.onclick = () => {
+   currentAudio.muted = !currentAudio.muted;
+   localStorage.setItem("muted", currentAudio.muted);
+   muteToggle.textContent = currentAudio.muted ? "🔇 Unmute" : "🔊 Mute";
+  };
+
+  volumeSlider.oninput = (e) => {
+   currentAudio.volume = parseFloat(e.target.value);
+   localStorage.setItem("volume", e.target.value);
+  };
+
+  // Theme toggle
+  const themeToggle = document.getElementById("theme-toggle");
+  if (localStorage.getItem("theme") === "light") document.body.classList.add("light-mode");
+
+  themeToggle.onclick = () => {
+   document.body.classList.toggle("light-mode");
+   localStorage.setItem("theme", document.body.classList.contains("light-mode") ? "light" : "dark");
+  };
+
+  // Numerology
+  const letterValues = { A: 1, B: 2, C: 3, D: 4, E: 5, F: 6, G: 7, H: 8, I: 9, J: 1, K: 2, L: 3, M: 4, N: 5, O: 6, P: 7, Q: 8, R: 9, S: 1, T: 2, U: 3, V: 4, W: 5, X: 6, Y: 7, Z: 8 };
+  function reduce(n) { while (n > 9 && ![11, 22, 33].includes(n)) n = [...String(n)].reduce((a, b) => a + +b, 0); return n; }
+  function getSums(name) {
+   let cons = 0, vows = 0, V = ['A', 'E', 'I', 'O', 'U'];
+   for (let l of name.toUpperCase()) if (letterValues[l]) V.includes(l) ? vows += letterValues[l] : cons += letterValues[l];
+   return [reduce(cons), reduce(vows)];
+  }
+  function calculateNumerology() {
+   const g1 = localStorage.getItem("givenFirstName") || "", g2 = localStorage.getItem("givenMiddleName") || "", g3 = localStorage.getItem("givenLastName") || "";
+   const c1 = localStorage.getItem("chosenFirstName") || g1, c2 = localStorage.getItem("chosenMiddleName") || g2, c3 = localStorage.getItem("chosenLastName") || g3;
+   const b1 = +localStorage.getItem("birthDate"), b2 = +localStorage.getItem("birthMonth"), b3 = +localStorage.getItem("birthYear");
+   const [a, b] = getSums(g1), [c, d] = getSums(g2), [e, f] = getSums(g3), [g, h] = getSums(c1), [i, j] = getSums(c2), [k, l] = getSums(c3);
+   const m = reduce(b1), n = reduce(b2), o = reduce((b3 + "").split('').reduce((x, y) => x + +y, 0));
+   const results = {
+    PersonalityNumber: reduce(a + c + e),
+    LifePathNumber: reduce(m + n + o)
+   };
+   const lifePathReadings = {
+    1: "You were born to lead, not follow. Your life path thrives in independence, originality, and ambition. There's a constant itch to initiate—projects, ideas, movements. You’re often misunderstood as pushy, but that’s just passion with a sharp edge. Your soul signed up for self-reliance, meaning your biggest lesson is trusting your gut over the crowd’s consensus. Blaze trails, not bridges.",
+    2: "Diplomacy is your divine gift. While others charge ahead, you weave behind the scenes, bringing people together with quiet grace. Your sensitivity is strength in disguise—it’s what makes you intuitive and deeply kind. This life is about collaboration, not control. You’re here to teach patience, peace, and the power of listening. Embrace your softness; it’s your sharpest tool.",
+    3: "You were born to create, communicate, and captivate. Expression is your oxygen. Whether it’s through art, humor, or sheer charisma, you magnetize attention effortlessly. But with great wit comes great responsibility—don’t waste your voice on shallow noise. You're a mood alchemist, turning trauma into poetry and pain into performance. Share boldly, but stay grounded in truth.",
+    4: "Structure is sacred to you. You're the builder who finds freedom through form. Discipline, practicality, and loyalty run deep in your blueprint. You crave stability, and often you’re the only sane voice in chaotic rooms. But don’t let rigidity turn to stagnation. You’re here to show the world that responsibility is sexy when worn with pride and purpose.",
+    5: "You incarnated to break rules. Freedom isn’t a luxury—it’s your lifeblood. You thrive in change, movement, and sensuality. Travel, variety, and risk are your textbooks. But too much stimulation can scatter you. You’re here to master chaos, not be consumed by it. Life’s a dance floor. Don’t just flail—learn the rhythm that lets you lead the dance.",
+    6: "Love is your ministry. You came here to serve, to nurture, to restore beauty and balance. Family, community, and justice weigh heavy on your shoulders, and rightly so—you’re built for it. But remember: martyrdom isn’t nobility. Self-love is your first duty. You teach others how to heal by healing yourself without apology or delay.",
+    7: "You’re not just curious—you’re cosmic. Seeker of truth, analyzer of the unseen, you’ve always felt the veil between worlds was a bit too thin. You question everything, and your soul demands solitude to process. This life is about depth, not speed. You’ll be misunderstood until you stop needing to be understood. Mystery is your native tongue.",
+    8: "You came to master power, not avoid it. Ambition pulses through your bones. You see systems, wealth, influence—and you’re not afraid to take the throne. But the test? Integrity. You’re here to prove power doesn’t have to corrupt. Build empires, but don’t forget your humanity. True wealth isn’t just measured in money—it’s legacy, too.",
+    9: "Your soul has been here many times. You walk this life like a farewell tour—wise, sensitive, and burdened with the urge to save the world. Compassion defines you, but martyrdom haunts you. Learn to give without disappearing. You’re here to release, forgive, and transcend. You’re a sunset in human form—haunting, healing, and never really gone.",
+    11: "You vibrate higher. Life Path 11 isn’t for the faint-hearted. You carry a double dose of intensity—part dreamer, part divine antenna. Visions come uninvited. Anxiety walks beside genius. Your challenge is to ground the lightning. Spiritual leadership is your birthright, but it starts with stabilizing yourself. You’re not crazy—you’re calibrated for the future.",
+    22: "You’re the master builder—part mystic, part engineer. You dream in blueprints and execute with precision. Vision without execution is just fantasy, and you were born to manifest the impossible. But ego and fear are your shadows. Don’t shrink or explode—stand tall and build from purpose. The world changes when you decide it should.",
+    33: "This is the rare path of the teacher-savior. You live in service to something greater. Compassion oozes from you. You feel others’ pain like your own. You’re here to embody unconditional love in action, not just in sentiment. This life is no vacation—it’s a masterclass in healing, self-sacrifice, and grace. When you speak, the broken listen."
+   };
+   const personalityReadings = {
+    1: "People see you as confident, capable, and driven. You have “main character energy”—even when you try to dim it. First impressions scream independence. You’re quick to take charge, and others often look to you for direction. Be mindful not to overpower gentler energies. Your vibe says, “I’ve got this.” Make sure that’s the truth, not just the mask.",
+    2: "You walk into a room and immediately soften it. Your presence is calm, non-threatening, and deeply intuitive. People trust you even before they know you. You’re a natural listener, often underestimated until your quiet insight hits like truth lightning. Underneath that peace is resilience. You’re not weak—you just don’t waste energy proving strength.",
+    3: "You sparkle. Personality 3 is vibrant, expressive, and contagiously fun. People feel better just being near you. You joke, charm, and storytell your way into hearts. But beware the tendency to perform. When your smile is real, it heals. You’re the party and the poet. Let them meet the whole you—not just the highlight reel.",
+    4: "You look like someone who can be counted on—and you are. Stable, practical, and always prepared, you radiate competence. People hand you responsibility even when you didn’t ask for it. There’s a quiet strength to you. But rigidity can make you seem distant. It’s okay to be the rock. Just don’t forget you’re also human.",
+    5: "You're unpredictable—and that’s why you're unforgettable. People sense excitement, risk, and maybe a little chaos when you enter. You bring spice to bland rooms and shake up sleepy conversations. But you might come off flaky or restless if you don’t anchor yourself. Your energy is addicting. Use it wisely. Stir, don’t shatter.",
+    6: "People feel safe with you. You radiate warmth, comfort, and dependability. Friends often see you as a caretaker or emotional anchor. You lead with your heart, not your ego. But don’t let kindness become control. You're not here to fix everyone. You’re here to model love that includes boundaries.",
+    7: "You give off mystery. People may be drawn to you but feel unsure how to reach you. You observe more than you speak, and your depth is apparent—even intimidating. It’s not coldness; it’s caution. You don’t trust easily, but when you do, you’re profound company. Still waters run deep—and occasionally dangerous.",
+    8: "You command attention. Your vibe is “don’t mess with me,” even when you’re smiling. People assume you’re successful, driven, and possibly intimidating. Leadership suits you, but make sure it’s earned, not imposed. When you balance ambition with empathy, you become unstoppable. Power looks good on you—just tailor it with kindness.",
+    9: "You walk in with the weight of stories. People feel your empathy immediately. You seem like someone who’s been through things—and grown. You carry a gentle melancholy that draws others in. There’s something old about your presence, like a human lighthouse. Just make sure you aren’t always the safe harbor. You get to rest, too.",
+    11: "You’re magnetic, almost otherworldly. People don’t just notice you—they feel you. There’s something unspoken in your aura that makes others pause. Sensitivity shines in you like a spotlight. You’re read as intense, even psychic. But it can be overwhelming. Protect your energy. You’re here to light the way, not burn out trying.",
+    22: "You give the impression of someone who gets things done. There’s a seriousness to your presence, a quiet pressure of potential. People sense you’re capable of big things—even if you’re still figuring it out. You radiate vision and structure. Don’t play small to avoid scaring people. Show up as the architect you are.",
+    33: "Your presence is pure heart. People instinctively open up to you, sensing they’ll be met with love, not judgment. You appear nurturing, compassionate, and deeply wise. But you’re not here just to comfort—you’re here to awaken. When you speak, people feel seen. Your vibe is healing. Don’t waste it in silence."
+   };
+
+   const div = document.getElementById("resultsContent");
+   const lifePathTitles = {
+    1: "The Origin Flame",
+    2: "The Silent Glue",
+    3: "The Spark-Tongued Muse",
+    4: "The Foundation Maker",
+    5: "The Chaos Dancer",
+    6: "The Sacred Keeper",
+    7: "The Mirror in the Mist",
+    8: "The Iron Visionary",
+    9: "The Eternal Giver",
+    11: "The Electric Prophet",
+    22: "The Sacred Architect",
+    33: "The Divine Healer"
+   };
+
+   const personalityTitles = {
+    1: "The Bold Entrance",
+    2: "The Gentle Force",
+    3: "The Social Magnet",
+    4: "The Reliable Pillar",
+    5: "The Wild Card",
+    6: "The Warm Hearth",
+    7: "The Distant Star",
+    8: "The Authority Signal",
+    9: "The Wise Soul",
+    11: "The Beacon",
+    22: "The Manifestor",
+    33: "The Soul Speaker"
+   };
+
+   div.innerHTML = `
+  <img src="assets/images/${results.LifePathNumber}.png" alt="Life Path ${results.LifePathNumber}" style="max-width:100px; display:block; margin: 0 auto 0.5rem;" />
+  <h3 class="numerology-title">🔢 Life Path Number ${results.LifePathNumber}: <em>${lifePathTitles[results.LifePathNumber] || ""}</em></h3>
+  <div class="numerology-reading">${lifePathReadings[results.LifePathNumber] || "No reading available for this number."}</div>
+  <img src="assets/images/${results.PersonalityNumber}.png" alt="Personality Number ${results.PersonalityNumber}" style="max-width:100px; display:block; margin: 1.5rem auto 0.5rem;" />
+  <h3 class="numerology-title">🧍‍♂️ Personality Number ${results.PersonalityNumber}: <em>${personalityTitles[results.PersonalityNumber] || ""}</em></h3>
+  <div class="numerology-reading">${personalityReadings[results.PersonalityNumber] || "No reading available for this number."}</div>
+`;
+  }
+
+  calculateNumerology();
+  // Load saved mood
+  const savedMood = localStorage.getItem("currentMood") || "lightest";
+  document.getElementById("mood-select").value = savedMood;
+  updateMediaByMood(savedMood);
+
+  function renderMoodHistory() {
+   const history = JSON.parse(localStorage.getItem("moodHistory") || "[]").slice(-10).reverse();
+   const log = document.getElementById("mood-log");
+   log.innerHTML = history.map(entry => `<li><strong>${entry.mood}</strong> — ${new Date(entry.timestamp).toLocaleString()}</li>`).join('');
+  }
+  renderMoodHistory();
+
+  document.getElementById("clock").classList.add("clock-display-container");
+
+  function calculateZodiac() {
+   const month = +localStorage.getItem("birthMonth");
+   const day = +localStorage.getItem("birthDate");
+
+   const zodiacData = [
+    {
+     sign: "Capricorn",
+     img: "capricorn.png",
+     overview: `<b>Core Personlity</b></br>
+Capricorn is ambition with a backbone. You’re the architect of success, with eyes on the summit and ice in your veins. You build empires while others scroll. You don’t brag—you own.
+
+<br><br><b>Love & Romance</b><br>
+You love like a fortress. Dry humor, old-school loyalty. You open up slowly but deeply. Affection is earned, not assumed. You’re sensual in private—but serious in public.
+
+<br><br><b>Career & Money</b><br>
+You were probably born employed. Finance, politics, business, structure. You save more than you spend and plan while others panic.
+
+<br><br><b>Shadown Side</b><br>
+Workaholic. Emotionally walled off. Control freak. Vulnerability terrifies you—but it's where your power is buried.
+
+<br><br><b>Symbolism & Insight</b><br>
+Saturn-ruled, cardinal earth. The Goat—climbing mountains no one else can even see.
+
+<br><br><b>Compatibility</b><br>
+Best: Taurus, Virgo, Scorpio
+Challenging: Aries, Libra, Gemini`
+    },
+    {
+     sign: "Aquarius",
+     img: "aquarius.png",
+     overview: `<b>Core Personlity</b></br>\n\n
+Aquarius is weird on purpose. You’re electric, aloof, rebellious, and genius-adjacent. You think ten years ahead and feel ten feet away. You care deeply about the world but sometimes forget your own heart.
+
+<br><br><b>Love & Romance</b><br>
+You want connection without control. Your partner has to be your friend and your freedom. You love with your mind first, heart second. Ghosting is an unfortunate tool in your kit.
+
+<br><br><b>Career & Money</b><br>
+Technology, science, activism, innovation. You disrupt. You invent. You’re allergic to cubicles. Money is just fuel for ideas.
+
+<br><br><b>Shadown Side</b><br>
+Detached. Contrarian. Emotionally unavailable. You feel more than you show—don’t forget to show.
+
+<br><br><b>Symbolism & Insight</b><br>
+Uranus/Saturn-ruled, fixed air. The Water Bearer—pouring knowledge into a thirsty world.
+
+<br><br><b>Compatibility</b><br>
+Best: Gemini, Libra, Sagittarius
+Challenging: Taurus, Scorpio, Cancer`
+    },
+    {
+     sign: "Pisces",
+     img: "pisces.png",
+     overview: `<b>Core Personlity</b></br>
+You’re a dream swimming in a harsh world. Pisces is empathy personified, psychic AF, and perpetually on the edge of fantasy and reality. You're not here to survive—you’re here to feel.
+
+<br><br><b>Love & Romance</b><br>
+You love with your entire soul and lose yourself in the process. You want someone who sees your depths and doesn’t try to fix them. You love like a poem, cry like a movie, and forgive like it’s a superpower.
+
+<br><br><b>Career & Money</b><br>
+Creative fields, healing, music, mysticism—wherever the intangible becomes magic. Money feels gross to you—but you attract it when you flow.
+
+<br><br><b>Shadown Side</b><br>
+Escapist. Overly trusting. Addictive tendencies. You disappear when the pain’s too big.
+
+<br><br><b>Symbolism & Insight</b><br>
+Neptune-ruled, mutable water. The Fish—swimming between dimensions, forever torn between surrender and salvation.
+
+<br><br><b>Compatibility</b><br>
+Best: Cancer, Scorpio, Capricorn
+Challenging: Gemini, Sagittarius, Leo`
+    },
+    {
+     sign: "Aries",
+     img: "aries.png",
+     overview: `<b>Core Personlity</b></br>
+You’re a cannonball with legs. Aries doesn’t ask, it acts. You’re the first spark, the blood in the punch, the adrenaline spike before anyone else even wakes up. You want results, not reflection.
+
+<br><br><b>Love & Romance</b><br>
+You flirt like a flamethrower—quick, bold, a little reckless. You fall fast, and if they can’t keep up, you’re already halfway to the next conquest. Passion matters. Boredom is death.
+
+<br><br><b>Career & Money</b><br>
+You don’t do “middle management.” You’re built to lead, build, break, and rebuild. You earn fast and spend faster—but somehow, you land on your feet.
+
+<br><br><b>Shadown Side</b><br>
+Impatience. Aggression. A low tolerance for anyone who thinks slower than you. You hate rules, but sometimes the rules are there to protect you.
+
+<br><br><b>Symbolism & Insight</b><br>
+Mars-ruled, cardinal fire. You are the Big Bang incarnate. The Ram—charging first, bleeding later.
+
+<br><br><b>Compatibility</b><br>
+Best: Leo, Sagittarius, Gemini
+Challenging: Cancer, Capricorn, Pisces`
+    },
+    {
+     sign: "Taurus",
+     img: "taurus.png",
+     overview: `<b>Core Personlity</b></br>
+Taurus is Earth in its most luxurious form. Think velvet soil, aged wine, and don't-touch-my-bed energy. You’re grounded, but not basic. You move slow because you’re building something that lasts.
+
+<br><br><b>Love & Romance</b><br>
+Sensual. Loyal. Possessive. You crave touch, comfort, and loyalty. Break your trust, and you’ll ghost someone like they never existed.
+
+<br><br><b>Career & Money</b><br>
+You want stability but not at the cost of your values. Real estate, art, food—anything where slow growth means solid rewards.
+
+<br><br><b>Shadown Side</b><br>
+Stubborn. Indulgent. Resistant to change even when it’s necessary. Your comfort zone can become a prison.
+
+<br><br><b>Symbolism & Insight</b><br>
+Venus-ruled, fixed earth. The Bull—fertile, strong, and immovable.
+
+<br><br><b>Compatibility</b><br>
+Best: Virgo, Capricorn, Cancer
+Challenging: Leo, Aquarius, Sagittarius`
+    },
+    {
+     sign: "Gemini",
+     img: "gemini.png",
+     overview: `<b>Core Personlity</b></br>
+You are two minds in one brilliant mess. Gemini is chaos with charm, intellect with zero chill. You’re not indecisive—you just like options.
+
+<br><br><b>Love & Romance</b><br>
+You fall in love with minds before bodies. Communication is your kink. Ghosting? Unfortunately, also your habit when boredom strikes.
+
+<br><br><b>Career & Money</b><br>
+Media, writing, communication. Freelance life suits you. Just finish one damn project before you start five more.
+
+<br><br><b>Shadown Side</b><br>
+Scattered. Superficial. Flighty. You can charm your way out of anything—but deep down, you fear being truly known.
+
+<br><br><b>Symbolism & Insight</b><br>
+Mercury-ruled, mutable air. The Twins—duality, dialogue, mischief.
+
+<br><br><b>Compatibility</b><br>
+Best: Libra, Aquarius, Aries
+Challenging: Virgo, Pisces, Scorpio`
+    },
+    {
+     sign: "Cancer",
+     img: "cancer.png",
+     overview: `<b>Core Personlity</b></br>
+Soft doesn’t mean weak. Cancer is moonlit intuition in armor. You feel everything but don’t always show it. You protect what’s yours like it’s sacred—and it is.
+
+<br><br><b>Love & Romance</b><br>
+You crave deep bonds, emotional safety. You’re nurturing and psychic—but not everyone deserves your softness.
+
+<br><br><b>Career & Money</b><br>
+Healing, food, home, or security. You’re excellent with money—especially saving it.
+
+<br><br><b>Shadown Side</b><br>
+Moody. Passive-aggressive. Manipulative when wounded. Your shell protects, but also isolates.
+
+<br><br><b>Symbolism & Insight</b><br>
+Moon-ruled, cardinal water. The Crab—soft center, armored edge.
+
+<br><br><b>Compatibility</b><br>
+Best: Scorpio, Pisces, Taurus
+Challenging: Aries, Libra, Gemini`
+    },
+    {
+     sign: "Leo",
+     img: "leo.png",
+     overview: `<b>Core Personlity</b></br>
+You are the Sun in a skin suit. Dramatic, generous, radiant. Leo doesn’t enter a room—they arrive.
+
+<br><br><b>Love & Romance</b><br>
+You love big, loud, and with sparkle. Grand gestures, loyalty, and emotional test scenes.
+
+<br><br><b>Career & Money</b><br>
+Entertainment, leadership, entrepreneurship. You make money to spend it glamorously. Broke Leos still buy gold.
+
+<br><br><b>Shadown Side</b><br>
+Pride. Vanity. You can’t stand being ignored. Your strength is real—but it comes with ego burn.
+
+<br><br><b>Symbolism & Insight</b><br>
+Sun-ruled, fixed fire. The Lion—royalty, heart, and divine performance.
+
+<br><br><b>Compatibility</b><br>
+Best: Aries, Sagittarius, Libra
+Challenging: Taurus, Scorpio, Capricorn`
+    },
+    {
+     sign: "Virgo",
+     img: "virgo.png",
+     overview: `<b>Core Personlity</b></br>
+\nYour chaos is organized. Virgo sees everything—especially what’s wrong. You crave precision, but your heart is full of service.
+
+<br><br><b>Love & Romance</b><br>
+Acts of service are your love language. You’ll fix their computer and their life—but stop dating people you want to repair.
+
+<br><br><b>Career & Money</b><br>
+Analysis, health, writing, organization. You work harder than anyone. Just remember to eat.
+
+<br><br><b>Shadown Side</b><br>
+Anxious. Overcritical. Obsessive. Learn to let the world stay a little messy.
+
+<br><br><b>Symbolism & Insight</b><br>
+Mercury-ruled, mutable earth. The Virgin—not pure, but purposeful.
+
+<br><br><b>Compatibility</b><br>
+Best: Taurus, Capricorn, Scorpio
+Challenging: Gemini, Sagittarius, Aries`
+    },
+    {
+     sign: "Libra",
+     img: "libra.png",
+     overview: `<b>Core Personlity</b></br>
+Balanced and diplomatic, you’re addicted to aesthetics and allergic to conflict. You want peace, but will fake it before you’ll fight for it.
+
+<br><br><b>Love & Romance</b><br>
+You love love. You crave partnership. But codependency lurks—watch for it.
+
+<br><br><b>Career & Money</b><br>
+Law, design, art, diplomacy. You work better with a partner. You spend to impress—and succeed.
+
+<br><br><b>Shadown Side</b><br>
+Indecisive. Conflict avoidant. Resentment builds quietly under all that charm.
+
+<br><br><b>Symbolism & Insight</b><br>
+Venus-ruled, cardinal air. The Scales—balance, beauty, justice.
+
+<br><br><b>Compatibility</b><br>
+Best: Gemini, Aquarius, Leo
+Challenging: Cancer, Capricorn, Virgo`
+    },
+    {
+     sign: "Scorpio",
+     img: "scorpio.png",
+     overview: `<b>Core Personlity</b></br>
+Scorpio is intensity wearing sunglasses. You’re seductive, secretive, and suspicious. You feel everything, deeply.
+
+<br><br><b>Love & Romance</b><br>
+You want soul-merging intimacy. Sex is sacred. Betrayal is the apocalypse.
+
+<br><br><b>Career & Money</b><br>
+Psychology, finance, research. You have money secrets and comeback stories.
+
+<br><br><b>Shadown Side</b><br>
+Jealous. Vengeful. Paranoid. You hide so well you disappear.
+
+<br><br><b>Symbolism & Insight</b><br>
+Pluto/Mars-ruled, fixed water. The Scorpion—sting, survival, and rebirth.
+
+<br><br><b>Compatibility</b><br>
+Best: Cancer, Pisces, Virgo
+Challenging: Leo, Aquarius, Aries`
+    },
+    {
+     sign: "Sagittarius",
+     img: "sagittarius.png",
+     overview: `<b>Core Personlity</b></br>
+Sagittarius is cosmic restlessness. You’re a philosopher with a passport. Freedom is your religion.
+
+<br><br><b>Love & Romance</b><br>
+You chase novelty and hate clinginess. You want passion without shackles. Give you space or lose you.
+
+<br><br><b>Career & Money</b><br>
+Travel, writing, teaching. You follow truth over trends. Financial planning? Meh.
+
+<br><br><b>Shadown Side</b><br>
+Blunt. Irresponsible. Commitment-phobic. You fear boredom more than failure.
+
+<br><br><b>Symbolism & Insight</b><br>
+Jupiter-ruled, mutable fire. The Archer—aiming higher, moving faster.
+
+<br><br><b>Compatibility</b><br>
+Best: Aries, Leo, Aquarius
+Challenging: Virgo, Pisces, Taurus`
+    }
+   ];
+
+   const zodiacRanges = [
+    { sign: "Capricorn", start: [12, 22], end: [1, 19] },
+    { sign: "Aquarius", start: [1, 20], end: [2, 18] },
+    { sign: "Pisces", start: [2, 19], end: [3, 20] },
+    { sign: "Aries", start: [3, 21], end: [4, 19] },
+    { sign: "Taurus", start: [4, 20], end: [5, 20] },
+    { sign: "Gemini", start: [5, 21], end: [6, 20] },
+    { sign: "Cancer", start: [6, 21], end: [7, 22] },
+    { sign: "Leo", start: [7, 23], end: [8, 22] },
+    { sign: "Virgo", start: [8, 23], end: [9, 22] },
+    { sign: "Libra", start: [9, 23], end: [10, 22] },
+    { sign: "Scorpio", start: [10, 23], end: [11, 21] },
+    { sign: "Sagittarius", start: [11, 22], end: [12, 21] }
+   ];
+
+   let sign = "Unknown";
+
+   for (let i = 0; i < zodiacRanges.length; i++) {
+    const { start, end } = zodiacRanges[i];
+    if (
+     (month === start[0] && day >= start[1]) ||
+     (month === end[0] && day <= end[1])
+    ) {
+     sign = zodiacRanges[i].sign;
+     break;
+    }
+   }
+
+   const found = zodiacData.find(z => z.sign === sign);
+   if (!found) return;
+
+   const astroDiv = document.querySelector(".column:nth-child(3)");
+   astroDiv.innerHTML = `
+    <h2>Astrology</h2>
+    <img src="assets/zodiac/${found.img}" alt="${found.sign}" style="max-width:200px; display:block; margin: 0 auto 0.5rem;" />
+    <h3 style="text-align:center">${found.sign}</h3>
+    <p class="numerology-reading">${found.overview}</p>
+  `;
+  }
+  calculateZodiac();
+
+
+ </script>
+</body>
+
+</html>

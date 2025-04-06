@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+ <meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0">
+ <title>Personalization - Numerology</title>
+ <style>
+  body {
+   background: linear-gradient(to right, #060014, #151585);
+   color: white;
+   font-family: sans-serif;
+   padding: 2rem;
+  }
+
+  form {
+   display: grid;
+   grid-template-columns: 1fr 1fr;
+   gap: 1rem;
+   max-width: 800px;
+   margin: auto;
+  }
+
+  input,
+  button {
+   padding: 0.7rem;
+   border-radius: 5px;
+   border: none;
+   font-size: 1rem;
+  }
+
+  button {
+   background: #00aaff;
+   color: white;
+   grid-column: span 2;
+   cursor: pointer;
+  }
+ </style>
+</head>
+
+<body>
+ <h1 style="text-align:center">Mystic Clock Personlization</h1>
+ <form id="personalForm">
+  <input type="text" placeholder="First Name" id="givenFirstName" required>
+  <input type="text" placeholder="Birth Date (1-31)" id="birthDate" required>
+  <input type="text" placeholder="Middle Name" id="givenMiddleName" required>
+  <input type="text" placeholder="Birth Month (1-12)" id="birthMonth" required>
+  <input type="text" placeholder="Last Name" id="givenLastName" required>
+  <input type="text" placeholder="Birth Year" id="birthYear" required>
+  <input type="text" placeholder="Preferred First Name" id="chosenFirstName">
+  <input type="text" placeholder="Preferred Middle Name" id="chosenMiddleName">
+  <input type="text" placeholder="Preferred Last Name" id="chosenLastName">
+  <button type="submit">Submit</button>
+ </form>
+
+ <script>
+  document.getElementById("personalForm").addEventListener("submit", function (e) {
+   e.preventDefault();
+   const fields = ["givenFirstName", "givenMiddleName", "givenLastName", "chosenFirstName", "chosenMiddleName", "chosenLastName", "birthDate", "birthMonth", "birthYear"];
+   fields.forEach(id => localStorage.setItem(id, document.getElementById(id).value));
+   location.href = "clock-dashboard.html";
+  });
+ </script>
+</body>
+
+</html>
