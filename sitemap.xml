@@ -5,6 +5,11 @@
     <priority>0.8</priority>
     <changefreq>monthly</changefreq>
   </url>
+    <url>
+    <loc>https://robert-calvin-dev.github.io/mysticclock/index.html</loc>
+    <priority>0.8</priority>
+    <changefreq>monthly</changefreq>
+  </url>
   <url>
     <loc>https://robert-calvin-dev.github.io/mysticclock/clock-dashboard.html</loc>
     <priority>1.0</priority>
