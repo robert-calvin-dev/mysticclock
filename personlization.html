@@ -4,7 +4,34 @@
 <head>
  <meta charset="UTF-8">
  <meta name="viewport" content="width=device-width, initial-scale=1.0">
- <title>Personal Mystic Clock</title>
+<!-- HEAD for Personalization Page -->
+<title>Personalize Your Mystic Clock | Custom Themes, Moods & More</title>
+<meta name="description" content="Customize your Mystic Clock with personalized themes, mood settings, and background options. Create a clock experience that reflects your vibe.">
+<link rel="canonical" href="https://robert-calvin-dev.github.io/mysticclock/personlization.html">
+<link rel="icon" href="https://robert-calvin-dev.github.io/mysticclock/assets/zodiac/virgo.png" type="image/x-icon">
+
+<!-- Open Graph / Twitter Meta -->
+<meta property="og:title" content="Personalize Your Mystic Clock | Themes & Mood Settings">
+<meta property="og:description" content="Personalize your Mystic Clock by selecting custom themes, mood backgrounds, and more. Make it truly yours.">
+<meta property="og:image" content="https://robert-calvin-dev.github.io/mysticclock/assets/zodiac/virgo.png">
+<meta property="og:url" content="https://robert-calvin-dev.github.io/mysticclock/personlization.html">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Personalize Your Mystic Clock | Themes & Mood Settings">
+<meta name="twitter:description" content="Customize your Mystic Clock based on your personal mood and style preferences.">
+<meta name="twitter:image" content="https://robert-calvin-dev.github.io/mysticclock/assets/zodiac/virgo.png">
+
+<!-- JSON-LD Structured Data -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "name": "Personalize Your Mystic Clock",
+  "url": "https://robert-calvin-dev.github.io/mysticclock/personlization.html",
+  "description": "Customize the Mystic Clock experience with themes, mood settings, and background visuals. Match your vibe with your timepiece."
+}
+</script>
+
  <style>
   body {
    background: linear-gradient(to right, #060014, #151585);
@@ -35,6 +62,36 @@
    grid-column: span 2;
    cursor: pointer;
   }
+  .gif-links-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  padding: 2rem 1rem;
+}
+
+.gif-link {
+  width: 180px;
+  height: 180px;
+  object-fit: cover;
+  border-radius: 8px;
+  transition: transform 0.3s, box-shadow 0.3s;
+  cursor: pointer;
+}
+
+.gif-link:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Mobile adjustment */
+@media (max-width: 768px) {
+  .gif-links-container {
+    flex-direction: column;
+  }
+}
+
  </style>
 </head>
 
@@ -55,6 +112,25 @@
   
   <button type="submit">Submit</button>
  </form>
+
+ <section class="gif-links-container">
+    <a href="https://robert-calvin-dev.github.io/portfolio/" target="_blank">
+      <img src="assets/images/robertcmarketing.gif" alt="Mystic Clock" class="gif-link">
+    </a>
+    <a href="https://robert-calvin-dev.github.io/the-pour-choice/" target="_blank">
+      <img src="assets/images/pourchoice.gif" alt="The Pour Choice" class="gif-link">
+    </a>
+    <a href="https://robert-calvin-dev.github.io/quickaddpro/" target="_blank">
+      <img src="assets/images/quickaddpro.gif" alt="Quick Add Pro" class="gif-link">
+    </a>
+    <a href="https://glitterqueencreative.ca" target="_blank">
+      <img src="assets/images/gq.gif" alt="Glitter Queen" class="gif-link">
+    </a>
+    <a href="https://robert-calvin-dev.github.io/UncleJimboPad/djmixer.html" target="_blank">
+      <img src="assets/images/ujdjpad.gif" alt="Uncle Jimbo DJ Pad" class="gif-link">
+    </a>
+  </section>
+  
 
  <script>
   document.getElementById("personalForm").addEventListener("submit", function (e) {
